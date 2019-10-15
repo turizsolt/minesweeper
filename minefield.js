@@ -1,3 +1,22 @@
+const withAll = (field, fn) => {
+    const size = field.length;
+    for(let i=0;i<size;i++){
+        for(let j=0;j<size;j++){
+            fn(field[i][j], i, j);
+        }
+    }
+};
+
+const withAdjacent = (field, x, y, fn) => {
+    for(let i=x-1;i<(x-(-2));i++) {
+        for(let j=y-1;j<(y-(-2));j++) {
+            if(isInField(field, i, j)) {
+                fn(field[i][j], i, j);
+            }
+        }
+    }
+};
+
 const initGame = (size, bombCount) => {
     const field = createField(size);
     addBombs(field, bombCount);
@@ -36,12 +55,7 @@ const addBombs = (field, bombCount) => {
 };
 
 const countAdjacentBombs = (field) => {
-    const size = field.length;
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            field[i][j].adjacentBombCount = countAdjacent(field, i, j);
-        }
-    }
+    withAll(field, (cell, i, j) => cell.adjacentBombCount = countAdjacent(field, i, j));
 };
 
 const isInField = (field, x, y) => {
@@ -51,28 +65,28 @@ const isInField = (field, x, y) => {
 
 const countAdjacent = (field, x, y) => {
     let count = 0;
-    for(let i=x-1;i<x+2;i++) {
-        for(let j=y-1;j<y+2;j++) {
-            if(isInField(field, i, j) && field[i][j].isBomb) {
-                count++;
-            }
+    withAdjacent(field, x, y, (cell, i, j) => {
+        if(cell.isBomb) {
+            count++;
         }
-    }
+    });
     return count;
 };
 
 const reveal = (field, x, y, render, endGame) => {
-    if(field[x][y].isRevealed) return;
-    if(field[x][y].isFlagged) return;
+    const cell = field[x][y];
 
-    field[x][y].isRevealed = true;
-    render(x, y, {...field[x][y]});
+    if(cell.isRevealed) return;
+    if(cell.isFlagged) return;
 
-    if(field[x][y].isBomb) {
+    cell.isRevealed = true;
+    render(x, y, {...cell});
+
+    if(cell.isBomb) {
         endGame(0);
         revealAll(field, render);
     } else {
-        if(field[x][y].adjacentBombCount === 0) {
+        if(cell.adjacentBombCount === 0) {
             revealAdjacent(field, x, y, render, endGame);
         }
         if(winCondition(field)) {
@@ -83,53 +97,46 @@ const reveal = (field, x, y, render, endGame) => {
 };
 
 const revealAll = (field, render) => {
-    const size = field.length;
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            if(!field[i][j].isRevealed && !(field[i][j].isFlagged && field[i][j].isBomb)) {
-                field[i][j].isRevealed = true;
-                render(i, j, field[i][j]);
-            }
+    withAll(field, (cell, i, j) => {
+        if(!cell.isRevealed && !(cell.isFlagged && cell.isBomb)) {
+            cell.isRevealed = true;
+            cell.isFlagged = false;
+            render(i, j, cell);
         }
-    }
+    });
 };
 
 const flagAll = (field, render) => {
-    const size = field.length;
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            if(field[i][j].isBomb && !field[i][j].isFlagged) {
-                field[i][j].isFlagged = true;
-                render(i, j, field[i][j]);
-            }
+    withAll(field, (cell, i, j) => {
+        if(cell.isBomb && !cell.isFlagged) {
+            cell.isFlagged = true;
+            render(i, j, cell);
         }
-    }
+    });
 };
 
 const winCondition = (field) => {
-    const size = field.length;
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            if(field[i][j].isRevealed && field[i][j].isBomb) return false;
-            if(!field[i][j].isRevealed && !field[i][j].isBomb) return false;
-        }
-    }
-    return true;
+    let isWon = true;
+    withAll(field, (cell) => {
+        if(cell.isRevealed && cell.isBomb) isWon = false;
+        if(!cell.isRevealed && !cell.isBomb) isWon = false;
+    });
+    return isWon;
 };
 
 const revealAdjacent = (field, x, y, render, endGame) => {
-    for(let i=x-1;i<(x-(-2));i++) {
-        for(let j=y-1;j<(y-(-2));j++) {
-            if(isInField(field, i, j) && !field[i][j].isRevealed) {
-                reveal(field, i, j, render, endGame);
-            }
+    withAdjacent(field, x, y, (cell, i, j) => {
+        if(!cell.isRevealed) {
+            reveal(field, i, j, render, endGame);
         }
-    }
+    });
 };
 
 const toggleFlag = (field, x, y, render) => {
-    if(field[x][y].isRevealed) return;
+    const cell = field[x][y];
 
-    field[x][y].isFlagged = !field[x][y].isFlagged;
-    render(x, y, {...field[x][y]});
+    if(cell.isRevealed) return;
+
+    cell.isFlagged = !cell.isFlagged;
+    render(x, y, {...cell});
 };

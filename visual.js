@@ -48,6 +48,8 @@ const start = () => {
     field = initGame(size, bombCount);
     clickable = true;
 
+    document.getElementById('result').innerText = '';
+
     visualTable = document.getElementById('minefield');
     while (visualTable.firstChild) {
         visualTable.removeChild(visualTable.firstChild);
