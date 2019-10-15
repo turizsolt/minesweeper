@@ -65,7 +65,7 @@ const isInField = (field, x, y) => {
 
 const countAdjacent = (field, x, y) => {
     let count = 0;
-    withAdjacent(field, x, y, (cell, i, j) => {
+    withAdjacent(field, x, y, (cell) => {
         if(cell.isBomb) {
             count++;
         }
@@ -94,6 +94,32 @@ const reveal = (field, x, y, render, endGame) => {
             flagAll(field, render);
         }
     }
+};
+
+const revealNearIfFlagged = (field, x, y, render, endGame) => {
+    const cell = field[x][y];
+
+    if(!cell.isRevealed) return;
+    if(cell.isFlagged) return;
+
+    const flagsAdjacent = countAdjacentFlags(field, x, y);
+    if(flagsAdjacent === cell.adjacentBombCount) {
+        withAdjacent(field, x, y, (cell, i, j) => {
+            if(!cell.isFlagged) {
+                reveal(field, i, j, render, endGame);
+            }
+        });
+    }
+};
+
+const countAdjacentFlags = (field, i ,j) => {
+    var countFlags = 0;
+    withAdjacent(field, i, j, (cell) => {
+        if(cell.isFlagged) {
+            countFlags++;
+        }
+    });
+    return countFlags;
 };
 
 const revealAll = (field, render) => {

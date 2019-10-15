@@ -18,6 +18,7 @@
     border: 1px inset black;
     text-align: center;
     line-height: 40px;
+    user-select: none;
 }
 
 .revealed {

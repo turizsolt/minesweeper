@@ -70,6 +70,7 @@ const start = () => {
             elem.addEventListener('click', (event) => {
                 if(!clickable) return;
                 const { x, y } = getEventTargetCoords(event);
+
                 reveal(field, x, y, render, endGame);
             });
 
@@ -77,7 +78,12 @@ const start = () => {
                 if(!clickable) return;
                 event.preventDefault();
                 const { x, y } = getEventTargetCoords(event);
-                toggleFlag(field, x, y, render);
+
+                if(event.shiftKey) {
+                    revealNearIfFlagged(field, x, y, render, endGame);
+                } else {
+                    toggleFlag(field, x, y, render);
+                }
             });
         }
     }
